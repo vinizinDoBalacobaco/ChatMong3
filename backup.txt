@@ -1,0 +1,246 @@
+  <template>
+    <div id="a">
+      <h1>Chat-Bot</h1>
+      <input type="text" v-model="form.meuInput" @keyup.enter="sendMessage" placeholder="Digite sua mensagem...">
+      <input type="button" value="Enviar" @click="sendMessage">
+      <ul class="chat-messages">
+        <li v-for="(message, index) in messages.slice().reverse()" :key="index" :class="['chat-message', message.role + '-message']">
+          {{ message.text }}
+    </li>
+        <!-- <li v-for="(message, index) in messages" :key="index" :class="['chat-message', message.role + '-message']">
+          {{ message.text }}
+        </li> -->
+      </ul>
+    </div>
+  </template>
+
+  <script>
+
+  const { MongoClient, ServerApiVersion } = require('mongodb');
+  const uri = "mongodb+srv://vinicarraro027:SjDTRN5EZljLeFAI@cluster0.0af4udx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+
+  // Create a MongoClient with a MongoClientOptions object to set the Stable API version
+  const client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    }
+  });
+
+  async function run() {
+    try {
+      // Connect the client to the server	(optional starting in v4.7)
+      await client.connect();
+      // Send a ping to confirm a successful connection
+      await client.db("admin").command({ ping: 1 });
+      console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+      // Ensures that the client will close when you finish/error
+      await client.close();
+    }
+  }
+  run().catch(console.dir);
+
+  import { App } from "realm-web";
+
+export default {
+  name: 'HelloWorld',
+  data() {
+    return {
+      form: {
+        meuInput: ""
+      },
+      messages: [],
+      app: null,
+      loading: false,
+      realm: null,
+    };
+  },
+  created() {
+    this.initializeRealm();
+    this.fetchMessages(); // Chama a função ao criar o componente
+  },
+  methods: {
+    async initializeRealm() {
+      // Insira seu App ID aqui
+      const appId = "your-realm-app-id"; // Substitua pelo seu App ID
+      this.app = new App({ id: appId });
+      this.realm = this.app.currentUser;
+      if (!this.realm) {
+        await this.login(); // Faz login se ainda não estiver logado
+      }
+    },
+
+    async login() {
+      const credentials = App.credentials.anonymous(); // Autenticação anônima
+      const user = await this.app.logIn(credentials);
+      console.log("Usuário logado:", user);
+    },
+
+  import { GoogleGenerativeAI } from "@google/generative-ai";
+
+  export default {
+    name: 'HelloWorld',
+    data() {
+      return {
+        form: {
+          meuInput: ""
+        },
+        messages: [], // Array to store messages
+        loading: false,
+        genAI: null,
+        model: null,
+        generationConfig: {
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          maxOutputTokens: 8192,
+          responseMimeType: "text/plain",
+        }
+      };
+    },
+    methods: {
+      async sendMessage() {
+        if (!this.form.meuInput.trim()) return;
+
+        const apiKey = "AIzaSyA2IguhcKunUYQToJRvahkhLqrIU2X1Kig";
+        this.genAI = new GoogleGenerativeAI(apiKey);
+        this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        this.messages.push({ role: "user", text: this.form.meuInput });
+
+  // Adiciona a mensagem de carregamento
+        this.loading = true; // Ativa o estado de carregamento
+        this.messages.push({ role: "loading", text: "Carregando..." });
+
+  // Limpa o input após enviar a mensagem
+        const userInput = this.form.meuInput;
+        this.form.meuInput = "";
+
+        const chatSession = this.model.startChat({
+          generationConfig: this.generationConfig
+        });
+
+        const result = await chatSession.sendMessage(userInput);
+        const responseText = result.response.text();
+
+        this.messages.pop();
+
+        // Add user message to messages array
+        // this.messages.push({ role: "user", text: this.form.meuInput });
+        // Add bot response to messages array
+        this.messages.push({ role: "bot", text: responseText });
+        this.loading = false
+
+        // Clear input after sending message
+        // this.form.meuInput = "";
+
+        this.$nextTick(() => {
+        const chatMessages = document.querySelector('.chat-messages');
+        chatMessages.scrollTop = 0; // Rolagem para o topo
+      });
+      }
+    }
+  }
+  </script>
+
+
+  <!-- Add "scoped" attribute to limit CSS to this component only -->
+  <style scoped>
+  .loading-message {
+    font-style: italic;
+    color: #888; /* Cor cinza para a mensagem de carregamento */
+    text-align: center;
+  }
+  h3 {
+    margin: 40px 0 0;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    display: inline-block;
+    margin: 0 10px;
+  }
+
+  a {
+    color: #42b983;
+  }
+
+  #a {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    align-items: center;
+    /* min-height: 100vh; */
+    background-color: #f0f0f0;
+  }
+
+  input[type="text"], input[type="button"] {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.2s ease-out;
+  }
+
+  input[type="button"] {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  input[type="button"]:hover {
+    background-color: #ff008c;
+  }
+
+  input[type="button"]:active {
+    transform: scale(0.5);
+  }
+
+  /* Estilos para mensagens do chat */
+  /* Ajuste a classe ul.chat-messages para garantir que a área de mensagens role corretamente */
+  ul.chat-messages {
+    margin-top: 20px;
+    overflow-y: auto; /* Use 'auto' para adicionar uma barra de rolagem quando necessário */
+    max-height: 600px; /* Ajuste conforme necessário */
+    padding: 10px;
+  }
+
+  /* Estilos para mensagens do chat */
+  .chat-message {
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border-radius: 20px;
+    word-break: break-word;
+    display: block; /* Certifique-se de que cada mensagem ocupe uma linha */
+  }
+
+  /* Estilos para as mensagens do usuário */
+  .user-message {
+    color: rgb(19, 43, 17);
+    text-align: right;
+    background-color: #3dd83db2; /* Cor de fundo para mensagens do usuário */
+  }
+
+  /* Estilos para as mensagens do bot */
+  .bot-message {
+    background-color: #65a4af94;
+    text-align: left;
+    color: #1d1224;
+    font-style: italic;
+  }
+
+  /* Adicione um estilo para separar melhor as mensagens */
+  .user-message, .bot-message {
+    margin: 5px 0; /* Adiciona uma margem entre as mensagens */
+  }
+
+  </style>
